@@ -1,34 +1,42 @@
 <template>
-  <div class="container">
-    <header>
-      <h1>各城市天氣查詢系統</h1>
-    </header>
-    <form>
-      <select class="selectCity" v-model="filterLocation">
-        <option value="all">請選擇城市</option>
-        <option value="六都">六都</option>
-        <option :value="item.locationName" v-for="item in location" :key="item.locationName">{{item.locationName}}</option>
-      </select>
-    </form>
-    <section>
-      <div>
-        <div v-for="item in locationNow" :key="item.locationName" class="card">
-          <div class="flex dataTitle">
-            <span>{{item.locationName}}</span>
-            <span>{{item.weatherElement[2].time[0].startTime | date}} - {{item.weatherElement[2].time[0].endTime | date}}</span>
-          </div>
-          <div class="dataContent">
-            <div>
-              <span>{{item.weatherElement[0].time[0].parameter.parameterName}}</span>
+  <div class="bg">
+    <loading :active.sync="isLoading"></loading>
+    <div class="container">
+      <header>
+        <h1 style="margin:0">各城市天氣查詢系統</h1>
+      </header>
+      <form>
+        <select class="selectCity" v-model="filterLocation">
+          <option value="all">請選擇城市</option>
+          <option value="六都">六都</option>
+          <option :value="item.locationName" v-for="item in location" :key="item.locationName">{{item.locationName}}</option>
+        </select>
+      </form>
+      <section>
+        <div>
+          <div v-for="item in locationNow" :key="item.locationName" class="card">
+            <div class="flex dataTitle">
+              <span style="margin-right:3px">{{item.locationName}}</span>
+              <span>{{item.weatherElement[2].time[0].startTime | date}} - {{item.weatherElement[2].time[0].endTime | date}}</span>
             </div>
-            <div class="flex">
-              <span>{{item.weatherElement[2].time[0].parameter.parameterName}}℃ - {{item.weatherElement[4].time[0].parameter.parameterName}}℃</span>
-              <span>降雨機率：{{item.weatherElement[1].time[0].parameter.parameterName}} %</span>
+            <div class="dataContent">
+              <div>
+                <span>{{item.weatherElement[0].time[0].parameter.parameterName}}
+                  <i class="fas fa-cloud-rain" v-if="item.weatherElement[1].time[0].parameter.parameterName >= 50"></i>
+                  <i class="fas fa-cloud"  v-if="item.weatherElement[1].time[0].parameter.parameterName > 20 && item.weatherElement[1].time[0].parameter.parameterName < 50"></i>
+                  <i class="fas fa-cloud-sun"  v-if="item.weatherElement[1].time[0].parameter.parameterName > 0 && item.weatherElement[1].time[0].parameter.parameterName <= 20 "></i>
+                  <i class="fas fa-sun" v-if="item.weatherElement[1].time[0].parameter.parameterName === 0"></i>
+                </span>
+              </div>
+              <div class="flex">
+                <span>{{item.weatherElement[2].time[0].parameter.parameterName}}℃ - {{item.weatherElement[4].time[0].parameter.parameterName}}℃</span>
+                <span>降雨機率：{{item.weatherElement[1].time[0].parameter.parameterName}} %</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </div>
 </template>
 
@@ -36,18 +44,13 @@
 export default {
   data () {
     return {
-      location: [],
       filterLocation: 'all'
     }
   },
   methods: {
     getWeather () {
       const vm = this
-      const api = `https://opendata.cwb.gov.tw/api/v1/rest/datastore/F-C0032-001?Authorization=${process.env.VUE_APP_API_PATH}`
-      this.$http.get(api).then((response) => {
-        vm.location = response.data.records.location
-        console.log(vm.location)
-      })
+      vm.$store.dispatch('getWeather')
     }
   },
   created () {
@@ -67,6 +70,12 @@ export default {
           return vm.filterLocation === item.locationName
         })
       }
+    },
+    isLoading () {
+      return this.$store.state.isLoading
+    },
+    location () {
+      return this.$store.state.location
     }
   }
 }
@@ -74,7 +83,7 @@ export default {
 
 <style lang="scss" scoped>
   .container {
-    width: 960px;
+    max-width: 960px;
     margin: 0 auto;
     text-align: center;
   }
@@ -82,6 +91,10 @@ export default {
     width: 50%;
     height: 50px;
     font-size: 20px;
+    @media(max-width: 767px) {
+      height: 30px;
+      font-size: 15px
+    }
   }
   .weatherList {
     width: 100%;
@@ -108,9 +121,24 @@ export default {
   .dataTitle{
     border-bottom: 1px solid gray;
     padding: 5px;
-    background-color: rgba($color: #A9A9A9, $alpha: 0.7)
+    background-color: rgba($color: #A9A9A9, $alpha: 0.7);
+    @media(max-width: 767px) {
+      font-size: 10px
+    }
   }
   .dataContent {
     padding: 10px;
+    background-color: rgba($color: #66CDAA, $alpha: 1.0);
+    @media(max-width: 767px) {
+      font-size: 10px
+    }
+  }
+  .bg {
+    background-image: url('https://images.unsplash.com/photo-1530908295418-a12e326966ba?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=634&q=80');
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed ;
+    min-height: 100vh;
   }
 </style>
